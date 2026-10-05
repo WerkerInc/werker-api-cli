@@ -8,6 +8,7 @@ const mock = http.createServer((req, res) => {
   if (req.headers.authorization !== 'Bearer wk_test_fixture') { res.writeHead(401); res.end('{"error":{"message":"Invalid key"}}'); return; }
   if (req.url === '/v1/balance') { res.end('{"currency":"usd","balances":{"customer_available":1250,"customer_reserved":500}}'); return; }
   if (req.url === '/v1/usage') { res.end('{"data":[]}'); return; }
+  if (req.url === '/v1/experts?q=onboarding') { res.end('{"data":[{"headline":"Product designer","rate_cents_per_30_min":6000,"slug":"expert-abcdef123456"}]}'); return; }
   res.writeHead(404); res.end('{}');
 });
 await new Promise(resolve => mock.listen(0, '127.0.0.1', resolve));
@@ -39,5 +40,10 @@ test('rejects missing credentials', async () => {
   const result = await cli(['balance'], '');
   assert.equal(result.code, 1);
   assert.match(result.stderr, /WERKER_API_KEY/);
+});
+test('searches expert profiles', async () => {
+  const result = await cli(['experts', 'search', 'onboarding']);
+  assert.equal(result.code, 0);
+  assert.match(result.stdout, /Product designer/);
 });
 test('exits cleanly', () => mock.close());

@@ -33,12 +33,20 @@ try {
     if (json) console.log(JSON.stringify(result, null, 2));
     else if (!result.data.length) console.log('No usage events yet.');
     else for (const event of result.data) console.log(`${new Date(event.occurred_at).toISOString().slice(0, 10)}  ${event.kind}  ${formatMoney(event.amount_cents)}`);
+  } else if (command === 'experts' && process.argv[3] === 'search') {
+    const query = process.argv.slice(4).filter(item => item !== '--json').join(' ').trim();
+    if (query.length < 2) throw new Error('Usage: werker experts search "what your agent needs"');
+    const result = await fetchAccount(`/v1/experts?${new URLSearchParams({ q: query })}`);
+    if (json) console.log(JSON.stringify(result, null, 2));
+    else if (!result.data.length) console.log('No matching experts yet.');
+    else for (const expert of result.data)
+      console.log(`${expert.headline}  ${formatMoney(expert.rate_cents_per_30_min)}/30 min  ${expert.slug}`);
   } else if (command === 'mcp') {
     console.log(mcp);
   } else if (command === 'version' || command === '--version') {
     console.log('werker 0.1.0');
   } else if (command === 'help' || command === '--help' || command === '-h') {
-    console.log('Werker CLI\n\n  werker balance [--json]   Show workspace funds\n  werker usage [--json]     Show recent usage\n  werker mcp                Print the remote MCP endpoint\n\nSet WERKER_API_KEY to a key from your dashboard.');
+    console.log('Werker CLI\n\n  werker balance [--json]             Show workspace funds\n  werker usage [--json]               Show recent usage\n  werker experts search "query"       Find human experts\n  werker mcp                          Print the remote MCP endpoint\n\nSet WERKER_API_KEY to a key from your dashboard.');
   } else {
     throw new Error(`Unknown command: ${command}. Run werker help.`);
   }
